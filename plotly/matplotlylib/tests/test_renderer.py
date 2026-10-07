@@ -235,6 +235,21 @@ def test_semitransparent_axes_background_preserved():
     assert plotly_fig.layout.plot_bgcolor == "rgba(26, 51, 76, 0.4)"
 
 
+def test_histogram_converts():
+    """Histograms must convert without error and keep bargap in plotly's
+    valid [0, 1] range; get_bar_gap can return a gap with floating point
+    noise for touching bars, which plotly rejects."""
+    # Seed 0 makes the first gap slightly negative (-4.4e-16)
+    rng = np.random.RandomState(0)
+    fig, ax = plt.subplots()
+    ax.hist(rng.randn(10000), 30)
+
+    plotly_fig = tls.mpl_to_plotly(fig)
+
+    assert len(plotly_fig.data) == 1
+    assert plotly_fig.layout.bargap == 0
+
+
 def test_line_color_is_valid_plotly_color():
     """Converted line colors are valid plotly color strings: plotly rejects
     a space between 'rgba' and the opening parenthesis."""
@@ -351,3 +366,37 @@ def test_custom_date_xtickvals_given_as_numbers_are_converted():
         "2023-01-07 00:00:00",
         "2023-01-10 00:00:00",
     )
+
+
+def test_tick_label_color_exports():
+    """Tick label colors are exported to the plotly tickfont."""
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1])
+
+    plotly_fig = tls.mpl_to_plotly(fig)
+
+    assert plotly_fig.layout.xaxis.tickfont.color == "#000000"
+
+
+def test_dark_tick_label_color_exports():
+    """Dark-background tick label colors are exported to the plotly
+    tickfont."""
+    with plt.style.context("dark_background"):
+        fig, ax = plt.subplots()
+        ax.plot([0, 1], [0, 1])
+
+        plotly_fig = tls.mpl_to_plotly(fig)
+
+    assert plotly_fig.layout.xaxis.tickfont.color == "#FFFFFF"
+
+
+def test_transparent_tick_label_color_exports():
+    """Transparent tick label colors ('none') export as transparent rgba."""
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1])
+    ax.tick_params(labelcolor="none")
+
+    plotly_fig = tls.mpl_to_plotly(fig)
+
+    assert plotly_fig.layout.xaxis.tickfont.color == "rgba(0,0,0,0)"
+    assert plotly_fig.layout.yaxis.tickfont.color == "rgba(0,0,0,0)"
