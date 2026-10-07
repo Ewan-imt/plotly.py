@@ -1,0 +1,26 @@
+name: Scheduled CI/CD
+
+on:
+  schedule:
+    # S'exécute à la minute 0 toutes les 6 heures (00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  # Optionnel : permet de déclencher le flux manuellement depuis l'interface GitHub
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Configurer l'environnement (ex. Node.js)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Lancer les tests
+        run: npm test
